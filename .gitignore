@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+
+# Build artifacts
+build/
+dist/
+outputs/
+*.spec.bak
+
+# Runtime data & cache (personal usage data - DO NOT publish)
+dashboard-data.json
+dashboard.html
+graph.json
+pricing.json
+basellm_models.json
+model-cost-config.json
+.first_scan_done
+logs/
+tokscale-verify-*/
+.npm-cache/
+
+# Bundled binary
+tokscale.exe
+
+# Workspace metadata
+.workbuddy/
