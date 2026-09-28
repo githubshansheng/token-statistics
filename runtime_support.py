@@ -112,9 +112,10 @@ def run_command(args, cwd=None, timeout=None, env=None, silent=False):
         errors="replace",
     )
     child_env = dict(os.environ if env is None else env)
-    if IS_FROZEN:
-        # Native core needs no Node/npm. Do not discover inherited npm wrappers
-        # (some desktop hosts configure those wrappers to launch Windows Terminal).
+    if IS_FROZEN and os.name == "nt":
+        # Windows 冻结版隔离继承的 PATH（部分桌面宿主会配置 npm 包装器）。
+        # macOS 冻结版保持原样：内置原生二进制不依赖 PATH，且 Finder 启动
+        # 时继承的 PATH 本就干净，隔离反而会破坏用户自定义工具链。
         system_root = child_env.get("SystemRoot", r"C:\Windows")
         child_env["PATH"] = os.pathsep.join([os.path.join(system_root, "System32"), system_root])
         child_env["COMSPEC"] = os.path.join(system_root, "System32", "cmd.exe")
@@ -174,16 +175,18 @@ def run_command(args, cwd=None, timeout=None, env=None, silent=False):
 def resolve_tokscale_command(sub_args):
     """返回 tokscale 调用命令列表；sub_args 为子命令及参数。
 
-    冻结版(便携包)：必须使用内置 tokscale.exe，绝不回退 npx；缺 exe 时明确抛 RuntimeError。
-    非冻结源码运行：有 tokscale.exe 则用，否则回退 npx（保留已有行为）。
+    冻结版(便携包)：必须使用内置原生二进制（Windows: tokscale.exe /
+    macOS: tokscale），绝不回退 npx；缺二进制时明确抛 RuntimeError。
+    非冻结源码运行：有内置二进制则用，否则回退 npx（保留已有行为）。
     """
     sub_args = list(sub_args)
-    bundled = os.path.join(HERE, "tokscale.exe")
+    binary_name = "tokscale.exe" if os.name == "nt" else "tokscale"
+    bundled = os.path.join(HERE, binary_name)
     if os.path.isfile(bundled):
         return [bundled] + sub_args
     if IS_FROZEN:
         raise RuntimeError(
-            "便携版缺少 tokscale.exe，无法执行："
+            "便携版缺少 %s，无法执行：" % binary_name
             + " ".join(sub_args)
             + "（冻结版不会回退到 npx，请重新安装完整的便携包）"
         )

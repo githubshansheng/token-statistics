@@ -25,3 +25,7 @@ tokscale.exe
 
 # Workspace metadata
 .workbuddy/
+
+# macOS packaging output & OS junk
+output/
+.DS_Store
